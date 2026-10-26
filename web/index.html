@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browser viewer for the MMX visual reconstruction project.">
+  <title>MMX · 3D Viewer</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">VISUAL RECONSTRUCTION</p>
+      <h1>MMX Spacecraft</h1>
+    </div>
+    <button id="reset-view" type="button">Reset view</button>
+  </header>
+  <main>
+    <section id="viewer" aria-label="Interactive 3D model viewer">
+      <div id="status" role="status">Loading model…</div>
+      <div class="help">Drag to rotate · Scroll to zoom · Right-drag to pan</div>
+    </section>
+    <aside>
+      <h2>Model preview</h2>
+      <p>This viewer loads <code>models/mmx.glb</code>, exported by the Blender starter script.</p>
+      <p id="model-status">Waiting for model…</p>
+      <p class="note">A neutral preview only. Geometry, materials, and scale must be checked against documented reference sources.</p>
+    </aside>
+  </main>
+</body>
+</html>
