@@ -5,7 +5,6 @@
 # Local/source assets; commit only when licensing and size are appropriate
 models/source.stl
 models/*.blend
-web/models/*.glb
 
 # Python
 __pycache__/
@@ -17,7 +16,3 @@ venv/
 .DS_Store
 Thumbs.db
 .vscode/
-
-# Large source STLs (use Git LFS or keep local)
-STL_data/*.stl
-*.pdf

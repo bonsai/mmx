@@ -1,146 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMX Spacecraft Viewer</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; background: #111; color: #eee; overflow: hidden; }
-        #canvas-container { width: 100vw; height: 100vh; position: relative; }
-        canvas { display: block; }
-        .controls {
-            position: absolute; top: 1rem; left: 1rem; z-index: 10;
-            background: rgba(0,0,0,0.7); padding: 1rem; border-radius: 8px;
-            display: flex; flex-direction: column; gap: 0.5rem;
-        }
-        .controls h2 { font-size: 1rem; font-weight: 600; color: #fff; }
-        button { padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #3a7bd5; color: white; cursor: pointer; font-size: 0.875rem; }
-        button:hover { background: #2a5bb8; }
-        .info {
-            position: absolute; bottom: 1rem; left: 1rem; z-index: 10;
-            background: rgba(0,0,0,0.7); padding: 1rem; border-radius: 8px; font-size: 0.8rem;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browser viewer for the MMX visual reconstruction project.">
+  <title>MMX · 3D Viewer</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="./app.js"></script>
 </head>
 <body>
-    <div id="canvas-container"></div>
-    <div class="controls">
-        <h2>MMX Spacecraft (Low Poly)</h2>
-        <button id="resetBtn">Reset View</button>
-        <button id="wireframeBtn">Toggle Wireframe</button>
+  <header>
+    <div>
+      <p class="eyebrow">VISUAL RECONSTRUCTION</p>
+      <h1>MMX Spacecraft</h1>
     </div>
-    <div class="info">
-        JAXA MMX Mission • Mars Moon eXploration<br>
-        Low-poly: ~3K verts, ~5K faces • <a href="https://github.com/bonsai/mmx" target="_blank" style="color:#8ab4f8">bonsai/mmx</a>
-    </div>
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-        const container = document.getElementById('canvas-container');
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        container.appendChild(renderer.domElement);
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111111);
-
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, -8, 4);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.enablePan = true;
-        controls.minDistance = 2;
-        controls.maxDistance = 50;
-        controls.target.set(0, 0, 0);
-
-        // Lighting
-        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambient);
-        
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        dirLight.position.set(5, 10, 8);
-        scene.add(dirLight);
-        
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-        dirLight2.position.set(-5, -5, -5);
-        scene.add(dirLight2);
-
-        // Load GLB
-        const loader = new GLTFLoader();
-        let model = null;
-        let isWireframe = false;
-
-        loader.load(
-            './models/mmx_lowpoly.glb',
-            (gltf) => {
-                model = gltf.scene;
-                model.scale.set(1, 1, 1);
-                scene.add(model);
-                
-                // Center model
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                model.position.sub(center);
-                controls.target.copy(center);
-            },
-            (xhr) => {
-                console.log(`${(xhr.loaded / xhr.total * 100).toFixed(0)}% loaded`);
-            },
-            (error) => {
-                console.error('Error loading GLB:', error);
-            }
-        );
-
-        // Reset view
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            camera.position.set(0, -8, 4);
-            controls.target.set(0, 0, 0);
-            controls.update();
-        });
-
-        // Toggle wireframe
-        document.getElementById('wireframeBtn').addEventListener('click', () => {
-            isWireframe = !isWireframe;
-            if (model) {
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.material.wireframe = isWireframe;
-                    }
-                });
-            }
-        });
-
-        // Resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
+    <button id="reset-view" type="button">Reset view</button>
+  </header>
+  <main>
+    <section id="viewer" aria-label="Interactive 3D model viewer">
+      <div id="status" role="status">Loading model…</div>
+      <div class="help">Drag to rotate · Scroll to zoom · Right-drag to pan</div>
+    </section>
+    <aside>
+      <h2>Model preview</h2>
+      <p>This viewer loads <code>models/mmx.glb</code>, exported by the Blender starter script.</p>
+      <p id="model-status">Waiting for model…</p>
+      <p class="note">A neutral preview only. Geometry, materials, and scale must be checked against documented reference sources.</p>
+    </aside>
+  </main>
 </body>
 </html>
