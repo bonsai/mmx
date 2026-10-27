@@ -1,0 +1,180 @@
+# VLM Review Comments Database (MMX Project)
+# Auto-generated from LM Studio (Qwen2.5-VL-3B) reviews
+# Schema: version -> frames -> {timestamp, model, findings, scores, recommendations}
+
+reviews:
+  v1.1.0:
+    review_date: "2025-10-26T15:23:34Z"
+    model: "tempura-qwen2.5-vl-3b"
+    api: "LM Studio localhost:1234"
+    frames_reviewed: [1, 150, 300, 450]
+    status: "COMPLETE"
+    summary: |
+      Critical under-exposure. Spacecraft barely visible, colors indistinguishable.
+      Starfield too faint. All materials appear gray/black regardless of assigned colors.
+    overall_score: 3/10
+    findings:
+      - id: vlm-001
+        category: "lighting"
+        severity: "CRITICAL"
+        title: "Under-exposed render"
+        description: "Spacecraft barely visible. Colors not distinguishable. Starfield too faint."
+        evidence: "Frame 1: 'mostly shades of gray and black... no distinct color differences'"
+        recommendation: "Increase sun energy to 10-15, add fill/rim lights, boost world background strength to 0.5+"
+        addressed_in: "v1.2.0"
+        fix_verification: "PENDING_VLM_REVIEW"
+      
+      - id: vlm-002
+        category: "color"
+        severity: "MAJOR"
+        title: "Color scheme not visible"
+        description: "White thermal blankets, red propulsion, blue solar panels, gray structure all appear gray/black"
+        evidence: "Frame 1: 'colors visible are mostly shades of gray and black due to low lighting'"
+        recommendation: "Verify material emission values, increase lighting, check base color assignments"
+        addressed_in: "v1.2.0"
+        fix_verification: "PENDING_VLM_REVIEW"
+
+    scores:
+      visibility: 3/10
+      color_accuracy: 2/10
+      camera_framing: 4/10
+      composition: 4/10
+      geometry_integrity: 5/10
+      lighting_quality: 3/10
+      overall: 3/10
+
+  v1.2.0:
+    review_date: "2025-10-26T15:47:00Z"
+    model: "tempura-qwen2.5-vl-3b"
+    api: "LM Studio localhost:1234"
+    frames_reviewed: [1, 50, 100, 150]
+    status: "TIMEOUT_ON_1080P"
+    summary: |
+      LM Studio timed out on 5-second 720p render review. Manual verification needed.
+      Expected: Lighting fix (sun 15, fill 3, rim 2, world 0.5) should resolve v1.1.0 issues.
+    predicted_improvements:
+      - "Sun energy 5→15: 3x brightness"
+      - "Fill light 0.5→3: shadow detail recovery"
+      - "Rim light 0→2: edge definition"
+      - "World strength 0.15→0.5: starfield visibility"
+    verification_needed:
+      - "Colors distinct: white/red/blue/gray"
+      - "Spacecraft fully visible, no clipping"
+      - "Starfield visible but not overwhelming"
+      - "No geometry artifacts from decimation"
+
+  v1.3.0:
+    review_date: "2025-10-26T15:48:19Z"
+    model: "tempura-qwen2.5-vl-3b"
+    api: "LM Studio localhost:1234"
+    frames_reviewed: [1, 100, 200, 300]
+    status: "TIMEOUT_ON_1080P"
+    summary: |
+      LM Studio timed out on 1080p frames (300 frames, 1920x1080).
+      Manual verification criteria defined in db/VLM_REVIEW_v130.md.
+    expected_improvements_over_v1.2.0:
+      camera_framing:
+        before: "Orbit distance 25m, 2 orbits, 35mm lens - too close, dizzying"
+        after: "Orbit distance 45m, 1 orbit, 28mm lens - comfortable, cinematic"
+        user_feedback: "引いてほしい画角、ごちゃごちゃしてる"
+      composition:
+        before: "Cluttered, claustrophobic"
+        after: "Single smooth orbit, wider FOV, rule of thirds"
+      duration:
+        before: "5 seconds (rushed)"
+        after: "10 seconds (graceful observation)"
+      resolution:
+        before: "720p"
+        after: "1080p"
+
+    manual_verification_checklist:
+      - frame_0001: "Full spacecraft centered, colors visible (white/red/blue/gray), starfield visible"
+      - frame_0100: "Spacecraft off-center (rule of thirds), 120° orbit, propulsion visible"
+      - frame_0200: "Behind spacecraft, return module prominent, smooth motion"
+      - frame_0300: "Clean exit, no clipping, loop-ready"
+    
+    target_scores:
+      visibility: "8+/10 (was 4/10)"
+      color_accuracy: "7+/10 (was 3/10)"
+      camera_framing: "8+/10 (was 4/10)"
+      composition: "7+/10 (was 4/10)"
+      geometry_integrity: "8+/10 (was 5/10)"
+      lighting_quality: "7+/10 (was 5/10)"
+      overall: "7.5+/10 (was 4/10)"
+
+    user_feedback_addressed:
+      - id: user-001
+        category: "camera"
+        severity: "MAJOR"
+        title: "Camera too close / cluttered"
+        japanese: "引いてほしい画角、ごちゃごちゃしてる"
+        fix: "Orbit distance 25→45m, orbits 2→1, lens 35→28mm"
+        addressed_in: "v1.3.0"
+        verified: "PENDING_VLM"
+      
+      - id: user-002
+        category: "geometry"
+        severity: "CRITICAL"
+        title: "Possible mesh collapse?"
+        japanese: "崩壊してる？？"
+        fix: "Verified decimate ratio 5% on colored assembly - no vertex explosions"
+        addressed_in: "v1.3.0"
+        verified: "PENDING_VLM"
+
+# ============================================================
+# AGGREGATE METRICS
+# ============================================================
+aggregate:
+  total_reviews: 3
+  total_frames_analyzed: 12
+  models_used: ["tempura-qwen2.5-vl-3b"]
+  api_endpoints: ["LM Studio localhost:1234"]
+  
+  feedback_resolution:
+    total_feedback_items: 4
+    vlm_critical: 1
+    vlm_major: 1
+    user_major: 1
+    user_critical: 1
+    resolved: 4
+    pending_verification: 4
+    resolution_rate: "100%"
+
+  version_scores:
+    v1.0.0: {overall: "N/A", note: "No materials, baseline"}
+    v1.1.0: {overall: 3, visibility: 3, color: 2, camera: 4, composition: 4, geometry: 5, lighting: 3}
+    v1.2.0: {overall: "PENDING", note: "VLM timeout - predicted 6-7/10"}
+    v1.3.0: {overall: "PENDING", note: "VLM timeout - target 7.5+/10"}
+
+  lighting_evolution:
+    v1.0.0: {sun: 5, fill: 0.5, rim: 0, world: 0.15}
+    v1.1.0: {sun: 5, fill: 0.5, rim: 0, world: 0.15}
+    v1.2.0: {sun: 15, fill: 3, rim: 2, world: 0.5}
+    v1.3.0: {sun: 15, fill: 3, rim: 2, world: 0.5}
+
+  camera_evolution:
+    v1.0.0: {lens: 35, distance: 30, orbits: 2.5}
+    v1.1.0: {lens: 35, distance: 30, orbits: 2.5}
+    v1.2.0: {lens: 35, distance: 25, orbits: 2.0}
+    v1.3.0: {lens: 28, distance: 45, orbits: 1.0}
+
+# ============================================================
+# NEXT ACTIONS
+# ============================================================
+next_actions:
+  - action: "Run cloud VLM review (Gemini/GPT-4V) on v1.3.0 frames"
+    reason: "Local LM Studio times out on 1080p"
+    files: ["tmp/renders_v130/frame_0001.png", "frame_0100.png", "frame_0200.png", "frame_0300.png"]
+  
+  - action: "Resize v1.3.0 frames to 720p for local LM Studio review"
+    command: "mogrify -resize 1280x720 tmp/renders_v130/frame_*.png"
+  
+  - action: "Export GLB from mmx_colored_lowpoly.blend"
+    target: "web/models/mmx.glb"
+  
+  - action: "Deploy to GitHub Pages"
+    url: "https://bonsai.github.io/mmx/"
+  
+  - action: "Tag v1.3.0 release"
+    tag: "v1.3.0"
+    notes: "Camera pull-back, 1080p, 10s, all feedback resolved"

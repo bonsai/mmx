@@ -1,0 +1,300 @@
+# MMX Spacecraft Ontology (v1.3.0)
+# Formal knowledge representation for JAXA MMX spacecraft
+# Compatible with RDF/OWL, JSON-LD, and YAML
+
+prefixes:
+  mmx: "https://jaxa.jp/mmx/ontology#"
+  sosa: "http://www.w3.org/ns/sosa/"
+  qudt: "http://qudt.org/schema/qudt/"
+  unit: "http://qudt.org/vocab/unit/"
+  schema: "http://schema.org/"
+  prov: "http://www.w3.org/ns/prov#"
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  owl: "http://www.w3.org/2002/07/owl#"
+
+classes:
+  # ============================================================
+  # SPACECRAFT HIERARCHY
+  # ============================================================
+  mmx:Spacecraft:
+    rdfs:label: "MMX Spacecraft"
+    rdfs:comment: "JAXA Martian Moons eXploration spacecraft"
+    schema:manufacturer: "JAXA"
+    schema:mission: "MMX"
+    mmx:launchDate: "2026-09" ^^unit:YearMonth
+    mmx:targetBodies: ["Phobos", "Deimos", "Mars"]
+    owl:equivalentClass: sosa:Platform
+
+  mmx:Module:
+    rdfs:label: "Spacecraft Module"
+    rdfs:subClassOf: mmx:SpacecraftComponent
+    mmx:hasInterface: mmx:MechanicalInterface
+    mmx:hasThermalInterface: mmx:ThermalInterface
+
+  mmx:PropulsionModule:
+    rdfs:label: "Propulsion Module"
+    rdfs:subClassOf: mmx:Module
+    mmx:hasSubComponent:
+      - mmx:PropulsionLower
+      - mmx:PropulsionUpper
+    mmx:propellantType: "Hydrazine/NTO"
+    mmx:totalDeltaV: "3.2" ^^unit:KilometerPerSecond
+
+  mmx:ReturnModule:
+    rdfs:label: "Return Module (Sample Return)"
+    rdfs:subClassOf: mmx:Module
+    mmx:hasSubComponent:
+      - mmx:ReturnLower
+      - mmx:ReturnUpper
+    mmx:sampleCapacity: "10" ^^unit:Gram
+    mmx:reentryVelocity: "11.6" ^^unit:KilometerPerSecond
+
+  mmx:ExplorationModule:
+    rdfs:label: "Exploration Module"
+    rdfs:subClassOf: mmx:Module
+    mmx:instruments:
+      - mmx:MIRS  # Infrared Spectrometer
+      - mmx:LIDAR
+      - mmx:CAM-C  # Wide-angle camera
+      - mmx:CAM-T  # Telescopic camera
+      - mmx:MEGANE # Gamma-ray/neutron spectrometer
+
+  mmx:LandingLegAssembly:
+    rdfs:label: "Landing Leg Assembly"
+    rdfs:subClassOf: mmx:Module
+    mmx:hasVariant:
+      - mmx:LandingLegNormal
+      - mmx:LandingLegPSMP
+    mmx:deploymentMechanism: "Spring-actuated"
+
+  mmx:SolarArray:
+    rdfs:label: "Solar Array (Paddle)"
+    rdfs:subClassOf: mmx:Module
+    mmx:cellType: "Triple-junction GaAs"
+    mmx:powerOutput: "1.2" ^^unit:Kilowatt
+    mmx:deploymentType: "Single-fold paddle"
+
+  mmx:PAFStand:
+    rdfs:label: "PAF (Payload Attach Fitting) Stand"
+    rdfs:subClassOf: mmx:StructuralComponent
+    mmx:interfaceStandard: "ESA PAF 1194"
+
+  # ============================================================
+  # PHYSICAL PROPERTIES
+  # ============================================================
+  mmx:PhysicalProperty:
+    rdfs:subClassOf: schema:QuantitativeValue
+
+  mmx:Mass:
+    rdfs:subClassOf: mmx:PhysicalProperty
+    qudt:unit: unit:Kilogram
+
+  mmx:Dimension:
+    rdfs:subClassOf: mmx:PhysicalProperty
+    qudt:unit: unit:Meter
+
+  mmx:Temperature:
+    rdfs:subClassOf: mmx:PhysicalProperty
+    qudt:unit: unit:Kelvin
+
+  # ============================================================
+  # MATERIALS & THERMAL
+  # ============================================================
+  mmx:Material:
+    rdfs:label: "Spacecraft Material"
+    mmx:thermalEmissivity: xsd:float
+    mmx:solarAbsorptivity: xsd:float
+    mmx:conductivity: xsd:float ^^unit:WattPerMeterKelvin
+
+  mmx:ThermalBlanket:
+    rdfs:subClassOf: mmx:Material
+    rdfs:label: "MLI Thermal Blanket"
+    mmx:layers: 20
+    mmx:outerLayer: "Beta cloth / Kapton"
+    mmx:emissivity: 0.85
+    mmx:absorptivity: 0.25
+
+  mmx:SolarCell:
+    rdfs:subClassOf: mmx:Material
+    rdfs:label: "Triple-Junction Solar Cell"
+    mmx:efficiency: 0.30
+    mmx:emissivity: 0.85
+    mmx:absorptivity: 0.92
+
+  mmx:TitaniumAlloy:
+    rdfs:subClassOf: mmx:Material
+    rdfs:label: "Ti-6Al-4V"
+    mmx:density: 4430 ^^unit:KilogramPerCubicMeter
+    mmx:yieldStrength: 880 ^^unit:MegaPascal
+
+  mmx:AluminumAlloy:
+    rdfs:subClassOf: mmx:Material
+    rdfs:label: "Al-7075 / Al-2219"
+    mmx:density: 2810 ^^unit:KilogramPerCubicMeter
+
+  # ============================================================
+  # INSTRUMENTS (SOSA/SSN)
+  # ============================================================
+  mmx:Instrument:
+    rdfs:subClassOf: sosa:Sensor
+    mmx:mountedOn: mmx:Module
+    mmx:fieldOfView: xsd:string
+    mmx:spectralRange: xsd:string
+
+  mmx:MIRS:
+    rdfs:label: "MMX InfraRed Spectrometer"
+    mmx:spectralRange: "0.9-3.6" ^^unit:Micrometer
+    mmx:spectralResolution: "20" ^^unit:Nanometer
+    mmx:fieldOfView: "0.5" ^^unit:Degree
+    mmx:mountedOn: mmx:ExplorationModule
+
+  mmx:LIDAR:
+    rdfs:label: "Laser Altimeter"
+    mmx:wavelength: "1064" ^^unit:Nanometer
+    mmx:range: "30" ^^unit:Kilometer
+    mmx:accuracy: "1" ^^unit:Meter
+    mmx:mountedOn: mmx:ExplorationModule
+
+  mmx:MEGANE:
+    rdfs:label: "Mars-moon Exploration with GAmma rays and NEutrons"
+    mmx:gammaRange: "0.3-10" ^^unit:MegaElectronVolt
+    mmx:neutronRange: "0.025-10" ^^unit:MegaElectronVolt
+    mmx:mountedOn: mmx:ExplorationModule
+
+  # ============================================================
+  # MISSION PHASES
+  # ============================================================
+  mmx:MissionPhase:
+    rdfs:subClassOf: prov:Activity
+    prov:startedAtTime: xsd:dateTime
+    prov:endedAtTime: xsd:dateTime
+
+  mmx:LaunchPhase:
+    rdfs:subClassOf: mmx:MissionPhase
+    mmx:launchVehicle: "H3 Rocket"
+    mmx:launchSite: "Tanegashima Space Center"
+
+  mmx:CruisePhase:
+    rdfs:subClassOf: mmx:MissionPhase
+    mmx:duration: "1.5" ^^unit:Year
+
+  mmx:MarsOrbitInsertion:
+    rdfs:subClassOf: mmx:MissionPhase
+
+  mmx:PhobosProximityOps:
+    rdfs:subClassOf: mmx:MissionPhase
+    mmx:orbitAltitude: "50-100" ^^unit:Kilometer
+    mmx:quasiSatelliteOrbit: true
+
+  mmx:LandingPhase:
+    rdfs:subClassOf: mmx:MissionPhase
+    mmx:landingSite: "Phobos"
+    mmx:sampleCollection: true
+
+  mmx:LiftoffPhase:
+    rdfs:subClassOf: mmx:MissionPhase
+
+  mmx:EarthReturnPhase:
+    rdfs:subClassOf: mmx:MissionPhase
+    mmx:reentryCapsule: mmx:ReturnModule
+
+  # ============================================================
+  # VISUALIZATION / CINEMATIC
+  # ============================================================
+  mmx:CameraPreset:
+    rdfs:label: "Cinematic Camera Preset"
+    mmx:lens_mm: xsd:float
+    mmx:orbitDistance: xsd:float ^^unit:Meter
+    mmx:orbitsPerAnimation: xsd:float
+    mmx:duration_sec: xsd:float
+
+  mmx:LightingPreset:
+    rdfs:label: "Lighting Preset"
+    mmx:sunEnergy: xsd:float ^^unit:Watt
+    mmx:fillEnergy: xsd:float ^^unit:Watt
+    mmx:rimEnergy: xsd:float ^^unit:Watt
+    mmx:worldStrength: xsd:float
+
+  mmx:RenderPreset:
+    rdfs:label: "Render Quality Preset"
+    mmx:engine: xsd:string
+    mmx:samples: xsd:integer
+    mmx:resolution: xsd:string
+    mmx:fps: xsd:integer
+
+individuals:
+  # Current version individuals
+  mmx:v130:
+    a: mmx:Spacecraft
+    mmx:version: "v1.3.0"
+    mmx:hasModule:
+      - mmx:PropulsionModule
+      - mmx:ReturnModule
+      - mmx:ExplorationModule
+      - mmx:LandingLegAssembly
+      - mmx:SolarArray
+      - mmx:PAFStand
+    mmx:visualization:
+      mmx:cameraPreset: mmx:orbital_standard
+      mmx:lightingPreset: mmx:standard
+      mmx:renderPreset: mmx:standard
+    prov:wasGeneratedBy: mmx:blender_pipeline_v130
+
+  mmx:blender_pipeline_v130:
+    a: prov:Activity
+    prov:used: mmx:STL_source_data
+    prov:used: mmx:cinematic_presets
+    prov:generated: mmx:v130_video
+    prov:endedAtTime: "2025-10-26T15:47:00Z"
+
+  mmx:v130_video:
+    a: schema:VideoObject
+    schema:contentUrl: "video/MMX_space_flight_v130.mp4"
+    schema:duration: "PT10S"
+    schema:encodingFormat: "video/mp4"
+    schema:width: 1920
+    schema:height: 1080
+
+# ============================================================
+# SHACL SHAPES (Validation Constraints)
+# ============================================================
+shapes:
+  mmx:SpacecraftShape:
+    targetClass: mmx:Spacecraft
+    property:
+      - path: mmx:hasModule
+        minCount: 6
+        maxCount: 6
+        message: "MMX must have exactly 6 modules"
+      - path: mmx:version
+        minCount: 1
+        datatype: xsd:string
+
+  mmx:ModuleShape:
+    targetClass: mmx:Module
+    property:
+      - path: mmx:hasMaterial
+        minCount: 1
+      - path: mmx:mass
+        datatype: xsd:float
+        lessThan: 5000  # kg per module
+
+  mmx:CameraPresetShape:
+    targetClass: mmx:CameraPreset
+    property:
+      - path: mmx:lens_mm
+        minInclusive: 14.0
+        maxInclusive: 100.0
+      - path: mmx:orbitDistance
+        minInclusive: 10.0
+        maxInclusive: 500.0
+
+  mmx:LightingPresetShape:
+    targetClass: mmx:LightingPreset
+    property:
+      - path: mmx:sunEnergy
+        minInclusive: 1.0
+        maxInclusive: 50.0
+      - path: mmx:worldStrength
+        minInclusive: 0.0
+        maxInclusive: 2.0

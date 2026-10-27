@@ -1,0 +1,249 @@
+name: MMX Generate & Review System
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agents/**"
+      - "models/**"
+      - "renders/**"
+      - "mmx_colors.json"
+      - "mmx_colors.yaml"
+      - ".github/workflows/gen-review-system.yaml"
+  workflow_dispatch:
+    inputs:
+      run_pipeline:
+        description: "Run full generate→render→review pipeline"
+        required: false
+        default: "true"
+        type: boolean
+      review_only:
+        description: "Only run VLM review on existing renders"
+        required: false
+        default: "false"
+        type: boolean
+
+env:
+  BLENDER_VERSION: "5.2"
+  LMSTUDIO_MODEL: "tempura-qwen2.5-vl-3b"
+
+jobs:
+  # ============================================================
+  # STAGE 1: GENERATE - Blender pipeline (import → color → animate)
+  # ============================================================
+  generate:
+    name: Generate Animation
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.run_pipeline == 'true' || github.event_name == 'push' }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Blender
+        uses: josephbmanley/install-blender-action@v2
+        with:
+          version: ${{ env.BLENDER_VERSION }}
+
+      - name: Run Blender Import & Color Pipeline
+        run: |
+          blender --background --python agents/blender_agent.py -- import_stl
+          blender --background --python agents/blender_agent.py -- apply_colors
+          blender --background --python agents/blender_agent.py -- decimate
+        shell: bash
+
+      - name: Run Blender Animation Setup
+        run: |
+          blender --background --python agents/blender_agent.py -- animate
+        shell: bash
+
+      - name: Render Animation Frames (Eevee)
+        run: |
+          mkdir -p renders
+          blender -b models/mmx_animation_eevee.blend -a
+        shell: bash
+
+      - name: Create Video from Frames
+        run: |
+          ffmpeg -y -framerate 30 -i renders/frame_%04d.png \
+            -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p \
+            MMX_space_flight_15sec.mp4
+        shell: bash
+
+      - name: Upload Render Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mmx-renders
+          path: |
+            renders/
+            MMX_space_flight_15sec.mp4
+            models/mmx_colored_lowpoly.blend
+            models/mmx_animation_eevee.blend
+          retention-days: 7
+
+      - name: Export GLB for Web
+        run: |
+          blender --background --python -c "
+          import bpy
+          bpy.ops.wm.open_mainfile(filepath='models/mmx_colored_lowpoly.blend')
+          bpy.ops.export_scene.gltf(filepath='web/models/mmx.glb', export_format='GLB')
+          "
+        shell: bash
+
+      - name: Upload Web Assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: mmx-web
+          path: web/
+          retention-days: 7
+
+  # ============================================================
+  # STAGE 2: REVIEW - VLM Analysis (LM Studio / Local VLM)
+  # ============================================================
+  review:
+    name: VLM Visual Review
+    runs-on: ubuntu-latest
+    needs: generate
+    if: ${{ always() && (github.event.inputs.run_pipeline == 'true' || github.event.inputs.review_only == 'true' || github.event_name == 'push') }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Render Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mmx-renders
+          path: ./
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install VLM Dependencies
+        run: |
+          pip install requests pillow
+        shell: bash
+
+      - name: Start LM Studio (Local Runner Only)
+        if: runner.environment == 'self-hosted'
+        run: |
+          # On self-hosted runners, start LM Studio with VLM
+          lms load ${{ env.LMSTUDIO_MODEL }} --gpu max
+          lms server start --port 1234 &
+          sleep 10
+        shell: bash
+
+      - name: Run VLM Review on Key Frames
+        if: runner.environment == 'self-hosted'
+        run: |
+          python agents/vlm_review.py keyframes
+        shell: bash
+        env:
+          LMSTUDIO_API: "http://localhost:1234/v1/chat/completions"
+
+      - name: Run VLM Review (Cloud Fallback - Gemini/OpenAI)
+        if: runner.environment != 'self-hosted'
+        run: |
+          python agents/vlm_review_cloud.py keyframes
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Upload VLM Reviews
+        uses: actions/upload-artifact@v4
+        with:
+          name: vlm-reviews
+          path: vlm_reviews.json
+          retention-days: 7
+
+      - name: Create Review Summary
+        run: |
+          cat > review_summary.md << 'EOF'
+          # VLM Review Summary
+          
+          **Pipeline Run:** ${{ github.run_id }}
+          **Commit:** ${{ github.sha }}
+          **Model:** ${{ env.LMSTUDIO_MODEL }}
+          
+          ## Key Findings
+          $(cat vlm_reviews.json | jq -r 'to_entries[] | "### \(.key)\n\(.value)"' 2>/dev/null || echo "Reviews pending")
+          
+          ## Action Items
+          - [ ] Adjust lighting based on VLM feedback
+          - [ ] Verify color accuracy
+          - [ ] Re-render if needed
+          EOF
+        shell: bash
+
+      - name: Comment on Commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('review_summary.md', 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.number || 0 }},
+              body: summary
+            });
+
+  # ============================================================
+  # STAGE 3: DEPLOY - GitHub Pages (Web Viewer)
+  # ============================================================
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [generate, review]
+    if: ${{ always() && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Download Web Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: mmx-web
+          path: web/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
+  # ============================================================
+  # STAGE 4: NOTIFY - Summary
+  # ============================================================
+  notify:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [generate, review, deploy]
+    if: always()
+    steps:
+      - name: Final Status
+        run: |
+          echo "## MMX Pipeline Complete"
+          echo ""
+          echo "| Stage | Status |"
+          echo "|-------|--------|"
+          echo "| Generate | ${{ needs.generate.result }} |"
+          echo "| Review | ${{ needs.review.result }} |"
+          echo "| Deploy | ${{ needs.deploy.result }} |"
+          echo ""
+          echo "🎬 Video: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "🌐 Viewer: https://bonsai.github.io/mmx/"
+          echo "📊 Reviews: Check workflow artifacts"
+MDEOF
+echo "Created gen-review-system.yaml"
