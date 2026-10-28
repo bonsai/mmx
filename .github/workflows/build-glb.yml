@@ -1,0 +1,51 @@
+name: Build MMX GLB from STL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "models/source.stl"
+      - "agents/blender_import_mmx.py"
+      - ".github/workflows/build-glb.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-mmx-glb
+  cancel-in-progress: false
+
+jobs:
+  build-glb:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes blender
+          blender --version
+      - name: Convert STL to GLB
+        run: blender --background --python agents/blender_import_mmx.py
+      - name: Verify output
+        run: |
+          test -s web/models/mmx_lowpoly.glb
+          file web/models/mmx_lowpoly.glb
+          ls -lh web/models/mmx_lowpoly.glb
+      - name: Commit generated GLB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/models/mmx_lowpoly.glb
+          if git diff --cached --quiet; then
+            echo "Generated GLB is unchanged."
+          else
+            git commit -m "build: regenerate MMX GLB from source STL"
+            git push origin HEAD:main
+          fi
