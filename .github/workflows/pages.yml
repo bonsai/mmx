@@ -25,6 +25,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Include flight videos
+        run: mkdir -p web/video && cp video/MMX_space_flight_5sec.mp4 video/MMX_space_flight_15sec.mp4 video/MMX_space_flight_v130.mp4 web/video/
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
