@@ -33,11 +33,14 @@ jobs:
           blender --version
       - name: Convert STL to GLB
         run: blender --background --python agents/blender_import_mmx.py
+      - name: Provide compatibility model path
+        run: cp web/models/mmx_lowpoly.glb web/models/mmx.glb
       - name: Verify output
         run: |
           test -s web/models/mmx_lowpoly.glb
-          file web/models/mmx_lowpoly.glb
-          ls -lh web/models/mmx_lowpoly.glb
+          test -s web/models/mmx.glb
+          file web/models/mmx_lowpoly.glb web/models/mmx.glb
+          ls -lh web/models/mmx_lowpoly.glb web/models/mmx.glb
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload viewer with generated GLB
@@ -50,7 +53,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/models/mmx_lowpoly.glb
+          git add web/models/mmx_lowpoly.glb web/models/mmx.glb
           if git diff --cached --quiet; then
             echo "Generated GLB is unchanged."
           else
