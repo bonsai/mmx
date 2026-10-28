@@ -1,7 +1,7 @@
 """Import an MMX STL into Blender and export a browser-ready GLB.
 
 Run from the repository root:
-  blender --background --python blender/import_mmx.py
+  blender --background --python agents/blender_import_mmx.py
 
 Place the source model at models/source.stl. Generated assets are ignored by git.
 Tested API target: Blender 4.0+; Blender operator names can vary by version.
