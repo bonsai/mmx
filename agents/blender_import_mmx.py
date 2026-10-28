@@ -12,7 +12,7 @@ import bpy
 ROOT = Path(__file__).resolve().parents[1]
 STL_PATH = ROOT / "models" / "source.stl"
 BLEND_PATH = ROOT / "models" / "mmx.blend"
-GLB_PATH = ROOT / "web" / "models" / "mmx.glb"
+GLB_PATH = ROOT / "web" / "models" / "mmx_lowpoly.glb"
 
 if not STL_PATH.exists():
     raise FileNotFoundError(
