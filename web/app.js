@@ -56,7 +56,7 @@ document.querySelector("#reset-view").addEventListener("click", () => {
 
 const loader = new GLTFLoader();
 loader.load(
-  "./models/mmx.glb",
+  "./models/mmx_lowpoly.glb",
   (gltf) => {
     model = gltf.scene;
     scene.add(model);
@@ -89,7 +89,7 @@ loader.load(
     console.error("Could not load web/models/mmx.glb", error);
     status.classList.add("error");
     status.textContent = "Model not found. Export web/models/mmx.glb using blender/import_mmx.py.";
-    modelStatus.textContent = "No GLB found yet. Add models/source.stl and run the Blender script.";
+    modelStatus.textContent = "Could not load web/models/mmx_lowpoly.glb.";
   }
 );
 
