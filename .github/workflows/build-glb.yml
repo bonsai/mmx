@@ -43,6 +43,10 @@ jobs:
           ls -lh web/models/mmx_lowpoly.glb web/models/mmx.glb
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Include flight videos
+        run: mkdir -p web/video && cp video/MMX_space_flight_5sec.mp4 video/MMX_space_flight_15sec.mp4 video/MMX_space_flight_v130.mp4 web/video/
+      - name: Verify flight videos
+        run: ls -lh web/video/*.mp4
       - name: Upload viewer with generated GLB
         uses: actions/upload-pages-artifact@v3
         with:
