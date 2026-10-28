@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: build-mmx-glb
@@ -36,6 +38,12 @@ jobs:
           test -s web/models/mmx_lowpoly.glb
           file web/models/mmx_lowpoly.glb
           ls -lh web/models/mmx_lowpoly.glb
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload viewer with generated GLB
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
       - name: Commit generated GLB
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,3 +57,14 @@ jobs:
             git commit -m "build: regenerate MMX GLB from source STL"
             git push origin HEAD:main
           fi
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    needs: build-glb
+    steps:
+      - name: Deploy viewer
+        id: deployment
+        uses: actions/deploy-pages@v4
