@@ -46,3 +46,18 @@ code { overflow-wrap: anywhere; color: #d8e7ff; }
   main { grid-template-columns: 1fr; }
   #viewer { min-height: 60vh; }
 }
+
+
+.video-gallery { max-width: 1600px; margin: 0 auto; padding: 1rem; }
+.video-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin: .5rem 0 1rem; }
+.video-heading h2 { margin: .25rem 0 0; font-size: clamp(1.25rem, 2.5vw, 1.8rem); }
+.video-heading > p { color: #9fb0c2; font-size: .9rem; }
+.video-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.video-card { min-width: 0; padding: .75rem; border: 1px solid #2b3544; border-radius: .9rem; background: #171f2a; }
+.video-card video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; border-radius: .5rem; background: #080b10; }
+.video-card h3 { margin: .8rem 0 .2rem; font-size: 1rem; }
+.video-card p { margin: 0; color: #9fb0c2; font-size: .88rem; }
+@media (max-width: 800px) {
+  .video-grid { grid-template-columns: 1fr; }
+  .video-heading { align-items: start; flex-direction: column; gap: .2rem; }
+}
