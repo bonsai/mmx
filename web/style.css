@@ -61,3 +61,19 @@ code { overflow-wrap: anywhere; color: #d8e7ff; }
   .video-grid { grid-template-columns: 1fr; }
   .video-heading { align-items: start; flex-direction: column; gap: .2rem; }
 }
+
+
+.header-actions, .export-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.button-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #52657b; border-radius: .6rem; padding: .65rem .9rem;
+  color: inherit; background: #202b39; text-decoration: none; font-size: .9rem;
+}
+.button-link:hover { background: #2b3a4c; }
+.export-actions { margin: 1rem 0; }
+.export-actions > * { flex: 1 1 auto; }
+#export-status { overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  header { align-items: flex-start; flex-direction: column; }
+  .header-actions { width: 100%; }
+}
