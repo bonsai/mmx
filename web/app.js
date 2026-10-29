@@ -5,13 +5,14 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const host = document.querySelector("#viewer");
 const status = document.querySelector("#status");
 const modelStatus = document.querySelector("#model-status");
+const exportStatus = document.querySelector("#export-status");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#151e2a");
 
 const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100000);
 camera.position.set(3, 2, 4);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -54,6 +55,70 @@ document.querySelector("#reset-view").addEventListener("click", () => {
   controls.update();
 });
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.querySelector("#export-png").addEventListener("click", () => {
+  renderer.render(scene, camera);
+  renderer.domElement.toBlob((blob) => {
+    if (!blob) {
+      exportStatus.textContent = "PNG export failed. Try again after the model has loaded.";
+      return;
+    }
+    downloadBlob(blob, "mmx-preview.png");
+    exportStatus.textContent = "PNG preview downloaded.";
+  }, "image/png");
+});
+
+document.querySelector("#export-svg").addEventListener("click", () => {
+  if (!model) {
+    exportStatus.textContent = "Wait for the model to load before exporting SVG.";
+    return;
+  }
+  const width = Math.max(host.clientWidth, 1);
+  const height = Math.max(host.clientHeight, 1);
+  camera.updateMatrixWorld(true);
+  model.updateMatrixWorld(true);
+  const paths = [];
+  const vector = new THREE.Vector3();
+  const maxTriangles = 60000;
+  let triangleCount = 0;
+
+  model.traverse((object) => {
+    if (!object.isMesh || !object.geometry?.attributes?.position) return;
+    const geometry = object.geometry;
+    const positions = geometry.attributes.position;
+    const index = geometry.index;
+    const count = index ? index.count : positions.count;
+    const materialColor = object.material?.color
+      ? "#" + object.material.color.getHexString()
+      : "#b7cbe3";
+    for (let i = 0; i + 2 < count && triangleCount < maxTriangles; i += 3) {
+      const ids = index ? [index.getX(i), index.getX(i + 1), index.getX(i + 2)] : [i, i + 1, i + 2];
+      const points = ids.map((id) => {
+        vector.fromBufferAttribute(positions, id).applyMatrix4(object.matrixWorld).project(camera);
+        return { x: (vector.x * 0.5 + 0.5) * width, y: (-vector.y * 0.5 + 0.5) * height, z: vector.z };
+      });
+      if (points.some((p) => p.z < -1.2 || p.z > 1.2)) continue;
+      const d = points.map((p, n) => `${n ? "L" : "M"}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ") + " Z";
+      paths.push(`<path d="${d}" fill="none" stroke="${materialColor}" stroke-opacity=".72" stroke-width=".65"/>`);
+      triangleCount++;
+    }
+  });
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#151e2a"/>${paths.join("")}</svg>`;
+  downloadBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), "mmx-wireframe.svg");
+  exportStatus.textContent = `SVG wireframe downloaded (${triangleCount.toLocaleString()} triangles projected). SVG is a 2D view, not an editable 3D model.`;
+});
+
 const loader = new GLTFLoader();
 loader.load(
   "./models/mmx_lowpoly.glb",
@@ -86,9 +151,9 @@ loader.load(
   },
   undefined,
   (error) => {
-    console.error("Could not load web/models/mmx.glb", error);
+    console.error("Could not load web/models/mmx_lowpoly.glb", error);
     status.classList.add("error");
-    status.textContent = "Model not found. Export web/models/mmx.glb using blender/import_mmx.py.";
+    status.textContent = "Model not found. Check web/models/mmx_lowpoly.glb.";
     modelStatus.textContent = "Could not load web/models/mmx_lowpoly.glb.";
   }
 );
