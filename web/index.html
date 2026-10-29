@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browser viewer for the MMX visual reconstruction project.">
-  <title>MMX · 3D Viewer</title>
+  <meta name="description" content="Explore the MMX spacecraft reconstruction in 3D and export SVG, PNG, or GLB previews.">
+  <title>MMX · Visual Explorer</title>
   <link rel="stylesheet" href="./style.css">
   <script type="importmap">
     {
@@ -22,7 +22,10 @@
       <p class="eyebrow">VISUAL RECONSTRUCTION</p>
       <h1>MMX Spacecraft</h1>
     </div>
-    <button id="reset-view" type="button">Reset view</button>
+    <div class="header-actions">
+      <button id="reset-view" type="button">Reset view</button>
+      <a class="button-link" href="./models/mmx_lowpoly.glb" download="mmx.glb">Download GLB</a>
+    </div>
   </header>
   <main>
     <section id="viewer" aria-label="Interactive 3D model viewer">
@@ -31,9 +34,15 @@
     </section>
     <aside>
       <h2>Model preview</h2>
-      <p>This viewer loads <code>models/mmx_lowpoly.glb</code>, exported by the Blender starter script.</p>
+      <p>Rotate the model, then export the current view as a PNG image or a projected SVG wireframe.</p>
+      <div class="export-actions">
+        <button id="export-png" type="button">Save PNG</button>
+        <button id="export-svg" type="button">Save SVG</button>
+        <a class="button-link" href="./models/mmx_lowpoly.glb" download="mmx.glb">Download GLB</a>
+      </div>
       <p id="model-status">Waiting for model…</p>
-      <p class="note">A neutral preview only. Geometry, materials, and scale must be checked against documented reference sources.</p>
+      <p id="export-status" class="note" aria-live="polite">PNG saves the rendered viewport. SVG exports a vector wireframe from the current camera angle.</p>
+      <p class="note">A visual reconstruction, not a verified engineering model. Geometry, materials, and scale should be checked against documented reference sources.</p>
     </aside>
   </main>
   <section class="video-gallery" aria-labelledby="video-gallery-title">
